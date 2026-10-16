@@ -60,7 +60,10 @@ if question:
         st.error("Sorry, I couldn't answer that one. Try asking it a different way.")
         st.stop()
     except Exception as e:
-        st.error(f"Something went wrong: {e}")
+        if "429" in str(e):
+            st.error("Gemini free tier limit reached. Wait a minute and try again.")
+        else:
+            st.error(f"Something went wrong: {e}")
         st.stop()
 
     with st.expander("Generated SQL"):

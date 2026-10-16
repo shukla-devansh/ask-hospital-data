@@ -2,12 +2,13 @@
 # To switch from Gemini to another provider, only ask_llm() needs to change.
 
 import os
+import time
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
-MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-latest")
+MODEL = os.getenv("GEMINI_MODEL", "gemini-flash-lite-latest")
 
 RULES = """Rules:
 - Write a query for SQLite (use strftime for dates, there is no MONTH() or YEAR()).
@@ -16,6 +17,7 @@ RULES = """Rules:
 - Dates are stored as text in YYYY-MM-DD format. Use date('now') for today.
 - readmitted is 1 or 0, so the readmission rate is AVG(readmitted).
 - Use department names, not ids, in the result.
+- Round decimal results to 2 places with ROUND().
 - If the question asks to change, delete or add data, or has nothing to do with this
   database, reply with exactly: CANNOT_ANSWER
 - Reply with only the SQL, no explanation and no markdown."""
@@ -44,8 +46,16 @@ def ask_llm(prompt):
         raise RuntimeError("GEMINI_API_KEY is missing. Add it to your .env file.")
 
     client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(model=MODEL, contents=prompt)
-    return response.text.strip()
+
+    # the free tier sometimes says "high demand" (503), so try a few times
+    for attempt in range(3):
+        try:
+            response = client.models.generate_content(model=MODEL, contents=prompt)
+            return response.text.strip()
+        except Exception as e:
+            if "503" not in str(e) or attempt == 2:
+                raise
+            time.sleep(2 * (attempt + 1))
 
 
 def clean_sql(text):

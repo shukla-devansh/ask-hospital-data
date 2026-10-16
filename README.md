@@ -83,7 +83,7 @@ pytest
 - The data is fake and small, so the numbers don't mean anything medically.
 - The LLM can still write a query that runs but answers the wrong question. Showing the SQL helps users catch this.
 - The keyword blocklist is simple. The read-only connection is the real protection.
-- The free Gemini tier has a low daily request limit, and each question uses two calls (SQL + insight).
+- The free Gemini tier has low rate limits, and each question uses two calls (SQL + insight). The app uses Flash-Lite by default because the regular Flash model only allows 5 requests a minute.
 - No login or per-user permissions, which a real hospital system would need.
 
 ## What I learned
